@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <script>
+        const w = new Worker("./js/worker_1.js");
+        w.onmessage = function (e) {
+            debugger;
+            console.dir(e);
+        }
+
+        w.onerror = function (e) {
+            debugger;
+            console.dir(e);
+        }
+
+        function a() {
+            w.postMessage({
+                a: "a",
+                b: `console.log("hi");`
+            });
+        }
+    </script>
+</head>
+
+<body>
+    <div>
+        <button onclick="a()">a</button>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,16 @@
+{
+  "name": "worker",
+  "keywords": [
+    "util",
+    "functional",
+    "server",
+    "client",
+    "browser"
+  ],
+  "author": "x_oldman",
+  "contributors": [],
+  "scripts": {},
+  "dependencies": {
+    "underscore": "^1.9.1"
+  }
+}

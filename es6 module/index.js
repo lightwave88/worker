@@ -1,0 +1,1 @@
+export { root as webWorker } from './main_1.js';

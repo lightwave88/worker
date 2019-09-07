@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <script src="../../js_lib/underscore-1.9.1.js"></script>
+    <script src="../../es5 module/index.php"></script>
+    <script type="module">
+        console.dir(_);
+        import { webWorker } from '../../es6 module/index.js';
+        // window["$webWorker"] = webWorker;
+    </script>
+    <script>
+        async function a(){
+            let res = await _.worker('random', 0, 1000);
+            console.log(res);
+        }
+    </script>
+</head>
+
+<body>
+    <div>
+        <button onclick="a()">a</button>
+    </div>
+</body>
+
+</html>
