@@ -1,5 +1,6 @@
 import { workerSettings } from './settings_1.js';
 import { WorkerManager } from './workermanager_1.js';
+import { JobForUser } from './job_1.js';
 
 ////////////////////////////////////////////////////////////////////////////
 //
@@ -15,23 +16,23 @@ import { WorkerManager } from './workermanager_1.js';
 //
 ////////////////////////////////////////////////////////////////////////////
 
+// 對外命令
 function root() {
     let args = Array.from(arguments);
-    let manager = WorkerManager.get_instance(root);
+    let manager = WorkerManager.get_instance();
 
-    // debugger;
-    let p = manager.addJob(args);
-
-    return p;
+    return (new JobForUser(manager, args));
 }
 
-root.GModules = {};
-
-// webWorker 為了是怕與 window.Worker 撞名
-export { root };
+root.GModules = {
+    workerSettings: workerSettings,
+    WorkerManager: WorkerManager,
+};
 
 workerSettings.GModules["root"] = root;
 WorkerManager.GModules["root"] = root;
+
+export { root as webWorker };
 //----------------------------
 // 對外的設定
 (function (fn) {
@@ -50,28 +51,28 @@ WorkerManager.GModules["root"] = root;
         manager.initWorkers(count);
     };
     //----------------------------
-    fn.setSourceScriptPath = function () {
-
+    fn.setSourceScriptPath = function (path) {
+        workerSettings.sourceScriptPath = path;
     };
     //----------------------------
-    fn.setExtension1ScriptPath = function () {
-
+    fn.setExtension1ScriptPath = function (path) {
+        workerSettings.extension1ScriptPath = path;
     };
     //----------------------------
-    fn.setMaxWorkers = function () {
-
+    fn.setMaxWorkers = function (num) {
+        workerSettings.max_workers = num;
     };
     //----------------------------
-    fn.setMinWorkers = function () {
-
+    fn.setMinWorkers = function (num) {
+        workerSettings.min_workers = num;
     };
     //----------------------------
-    fn.setIdleTime = function () {
-
+    fn.setIdleTime = function (time) {
+        workerSettings.idleTime = time;
     };
     //----------------------------
-    fn.addImportScript = function () {
-
+    fn.importScript = function (arg) {
+        workerSettings.importScript(arg);
     };
     //----------------------------
     fn.getWorkers = function () {
@@ -81,36 +82,27 @@ WorkerManager.GModules["root"] = root;
     };
     //----------------------------
     fn.getJobs = function () {
-
+        let manager = WorkerManager.get_instance();
+        manager.getJobs();
+    };
+    //----------------------------
+    // 強制停止 worker
+    // for node.js
+    fn.terminateAllWorkers = function () {
+        let manager = WorkerManager.get_instance();
+        manager.terminateAllWorkers();
     };
 })(root);
 
 //----------------------------
-(function () {
+function inject(_) {
     // 注入 _ 的工廠
-    let _;
-
-    if (typeof (window) == "undefined" || typeof (document) == "undefined") {
-        // es6 只能在 browser 下跑
-        return;
-    }
-
-    if (typeof (window._) != "undefined") {
-        _ = window._;
-    }
 
     root.GModules["_"] = _;
-
-    // 限制作用環境
-
-    Object.defineProperty(root, '_', {
-        enumerable: false,
-        configurable: false,
-        writable: false,
-        value: _,
-    });
 
     _.mixin({
         worker: root
     });
-})();
+};
+
+export { inject };

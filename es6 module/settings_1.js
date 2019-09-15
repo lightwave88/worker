@@ -31,10 +31,14 @@ const defaultSetting = {};
 
     // 要被 import 的 script
     $d.importScriptList = [];
+
+    // 任務的時限，預設無時限
+    $d.timeout = null;
 })();
 //--------------------------------------
+// defaultSetting 的包覆者
 const SettingProxy = {
-    addImportScript: function (script) {
+    importScript: function (script) {
 
         if (!Array.isArray(script)) {
             script = [script];
@@ -42,7 +46,7 @@ const SettingProxy = {
         script.forEach(function (s) {
             defaultSetting.importScriptList.push(s);
         });
-    },    
+    },
 };
 
 SettingProxy.GModules = {};
@@ -60,13 +64,19 @@ export { SettingProxy as workerSettings };
             return defaultSetting.max_workers;
         },
         set: function (count) {
+            const errorList = [];
 
             if (count < defaultSetting.min_workers) {
-                throw new Error(`worker maxWorkersCount < minWorkersCount(${defaultSetting.min_workers})`);
+                errorList.push(`max_workers < min_workers(${defaultSetting.min_workers})`);
             }
 
             if (count < 1) {
-                errorList.push('max_workers must >= 1');
+                errorList.push('max_workers must < 1');
+            }
+
+            if (errorList.length) {
+                let msg = errorList.join("\n");
+                throw new Error(msg);
             }
 
             defaultSetting.max_workers = count;
@@ -82,9 +92,21 @@ export { SettingProxy as workerSettings };
             return defaultSetting.min_workers;
         },
         set: function (count) {
+            const errorList = [];
+
             if (count > defaultSetting.max_workers) {
-                throw new Error(`workers count > maxWorkersNum(${defaultSetting.max_workers})`);
+                errorList.push(`min_workers > max_workers(${defaultSetting.max_workers})`);
             }
+
+            if(count < 0){
+                errorList.push('min_workers < 0');
+            }
+
+            if (errorList.length) {
+                let msg = errorList.join("\n");
+                throw new Error(msg);
+            }
+
             workerSettings.min_workers = count;
         }
     });
@@ -158,15 +180,24 @@ export { SettingProxy as workerSettings };
 
         }
     });
+    //------------------
+    Object.defineProperty(SettingProxy, 'timeout', {
+        enumerable: true,
+        configurable: false,
+        // writable: false,
+        get: function () {
 
+            if(typeof defaultSetting.timeout != "number"){
+                defaultSetting.timeout = null;
+            }
+
+            return defaultSetting.timeout;
+        },
+        set: function (timeout) {
+            if(typeof timeout != "number"){
+                timeout = null;
+            }
+            defaultSetting.timeout = timeout;
+        }
+    });
 }());
-
-
-
-
-
-
-
-
-
-

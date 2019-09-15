@@ -1,1 +1,1 @@
-export { root as webWorker } from './main_1.js';
+export { webWorker, inject } from './main_1.js';

@@ -1,6 +1,6 @@
 
 import { WorkerClass } from './workerProxy_2.js';
-import { Job } from './Job_1.js';
+import { WorkerJob } from './WorkerJob_1.js';
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -10,6 +10,7 @@ import { Job } from './Job_1.js';
 
 class WorkerManager {
 
+    // WorkerManager 只能有單例
     static get_instance(workerCommand) {
         if (WorkerManager.instance == null) {
             WorkerManager.instance = new WorkerManager(workerCommand);
@@ -17,10 +18,10 @@ class WorkerManager {
         return WorkerManager.instance;
     }
     //------------------------------------------------------------------
-    constructor(root) {
+    constructor() {
 
         // 與外界橋接的橋樑
-        this.root = root;
+        this.root;
 
         //
         this._;
@@ -47,9 +48,11 @@ class WorkerManager {
     _getSettings() {
         debugger;
 
-        this.settings = this.root.settings;
+        this.root = WorkerManager.GModules["root"];
 
-        this._ = this.root._;
+        this.settings = this.root.GModules["workerSettings"];
+
+        this._ = this.root.GModules["_"];
 
         if (this._ == null) {
             throw new Error('no import _');
@@ -76,21 +79,26 @@ class WorkerManager {
         }
     }
     //------------------------------------------------------------------
-    addJob(args) {
+    // args: 使用者下的命令
+    addJob(commandArgs, jobOptions) {
         // debugger;
         // console.log('--------------');
         console.log('WorkerManager > 加入新工作');
 
-        let job = new Job(this, args);
+        let job = new WorkerJob(this, commandArgs, jobOptions);
 
         // 把任務加入
         this.jobList.unshift(job);
         //----------------------------
         // 檢查是否有 idle worker
-        this.noticeWorkers_checkJob();
+        this.assignJob();
 
         return job.promise();
-    };
+    }
+    //------------------------------------------------------------------
+    getJobs() {
+        return this.jobList;
+    }
     //------------------------------------------------------------------
     // 預先不會在一開始啟動 workers
     // 通常只有在有指令後才會有 workers 待命
@@ -101,58 +109,50 @@ class WorkerManager {
         const min_workers = this.settings.min_workers;
         const max_workers = this.settings.max_workers;
 
-        if(count > max_workers){
+        if (count > max_workers) {
             throw new Error(`initWorkers.count > max_workers(${max_workers})`);
         }
 
         for (let i = 0; i < count; i++) {
             debugger;
 
-            if(this.workers.size >= max_workers){
+            if (this.workers.size >= max_workers) {
                 break;
             }
 
-            let employment = false;
-            if (this.workers.size < min_workers) {
-                // 正職還有缺額
-                employment = true;
-            }
+            let employment = this._checkEmployStatus();
+
             new this.workerClass(this, employment);
         }
     }
     //------------------------------------------------------------------
     // 針對 node.js
-    terminateAllWorkers(){
-
+    terminateAllWorkers() {
+        this.workers.forEach(function (w) {
+            this.removeWorker(w, true);
+        }, this);
     }
     //------------------------------------------------------------------
-    // 請工作人員注意是否有工作進來
-    // worker: {worker: 由 worker 呼叫，null: 由 manager 呼叫}
-    noticeWorkers_checkJob(worker) {
-        if (worker == null) {
-            // console.log('check by manager');
-        } else {
-            console.log('check by worker(%s)', worker.id);
-        }
-
+    // 分派任務
+    // 把任務交給 worker 去辦
+    assignJob() {
+        console.log('manager assignJob');
+        //-----------------------
 
         while (this.jobList.length > 0) {
 
             console.log('still have jobs(%s)', this.jobList.length);
 
             // 盡可能招募 worker 來接工作
-            let w = this._checkIdleWorker();
+            let w = this._findIdleWorker();
 
             if (w) {
-                let job = this.jobList.pop();
-                w.takeJob_callByManager(job);
+                w.takeJob_callByManager();
             } else {
                 // 若找不到可用的 worker 作罷
                 break;
             }
         }
-
-
     }
     //------------------------------------------------------------------
     // 新增 worker(由 worker 自己通報)
@@ -161,8 +161,12 @@ class WorkerManager {
     }
     //------------------------------------------------------------------
     // 移除指定的 worker(由 worker 自己通報)
-    removeWorker(workerProxy) {
+    removeWorker(workerProxy, close) {
         this.workers.delete(workerProxy);
+
+        if (close) {
+            this.workers.closeWorker();
+        }
     }
     //------------------------------------------------------------------
     // worker 想取得 job
@@ -179,32 +183,18 @@ class WorkerManager {
     }
     //------------------------------------------------------------------
     // 檢查是否有空閒的 worker
-    _checkIdleWorker() {
+    _findIdleWorker() {
         // debugger;
 
         console.log('manager find worker');
 
         const max_workers = this.settings.max_workers;
-        const min_workers = this.settings.min_workers;
+        // const min_workers = this.settings.min_workers;
 
-        let idleWork;
-        // 找尋空嫌中的 worker
-        let idleWorks = this.findIdleWorkers();
+        // 找尋空閒中的 worker
+        let idleWork = this._findExistedIdleWorker();
 
-        if (idleWorks.length > 0) {
-
-            // 優先找正職者
-            idleWorks.some(function (w) {
-                if (w.employment) {
-                    idleWork = w;
-                    return true;
-                }
-            });
-
-            idleWork = idleWork || idleWorks[0];
-
-            // console.log(`manager find idle worker(${idleWork.id})`);
-
+        if (idleWork != null) {
             return idleWork;
         }
         //----------------------------
@@ -214,12 +204,8 @@ class WorkerManager {
             // 沒有閒置的 worker
             // 但已有的 worker 數量尚未達上限
 
-            let employment = false;
-
-            if (this.workers.size < min_workers) {
-                // 正職還有缺額
-                employment = true;
-            }
+            // 檢查 employment 狀態
+            let employment = this._checkEmployStatus();
 
             // console.log(`manager employment new worker(employment: ${employment})`);
 
@@ -230,29 +216,84 @@ class WorkerManager {
         }
     }
     //------------------------------------------------------------------
+    // 檢查 employ 狀態
+    _checkEmployStatus() {
+        const min_workers = this.settings.min_workers;
+
+        let info = this.getAllworkersInfo();
+        let employ = info.employ;
+
+        if (employ.length < min_workers) {
+            return true;
+        }
+        return false;
+    }
+    //------------------------------------------------------------------
     // 找出閒置中的 worker
-    findIdleWorkers() {
+    _findExistedIdleWorker() {
         let workers = Array.from(this.workers);
+        let worker = null;
 
-        workers = workers.slice();
+        let _workerList = [];
 
-        workers = workers.filter(function (w) {
-            if (w.isReady2TakeJob()) {
-                return true;
+        let res = workers.some(function (w) {
+            if (!w.isBusy()) {
+
+                if (w.employment) {
+                    worker = w;
+                    return true;
+                } else {
+                    _workerList.push(w);
+                }
             }
         });
-        return workers;
+
+        if (!res && _workerList.length) {
+            worker = _workerList[0];
+        }
+
+        if(_workerList.length){
+            _workerList.length = 0;
+        }
+        _workerList = undefined;
+
+        return worker;
+    }
+    //------------------------------------------------------------------
+    // 有 worker 被解僱，就再找新的進來
+    addNewWorker_callBy_sacked() {
+
+        console.log("有員工被解僱，招募新的員工");
+
+        // 沒有空閒中的 worker
+        if (this.workers.size >= max_workers) {
+            console.log("已達最大員工數，不再招募");
+            return;
+        }
+        // 沒有閒置的 worker
+        // 但已有的 worker 數量尚未達上限
+
+        // 檢查 employment 狀態
+        let employment = this._checkEmployStatus();
+
+        new this.workerClass(this, employment);
     }
     //------------------------------------------------------------------
     // 取得需要的資訊
     getAllworkersInfo() {
         let all = [];
         let idle = [];
+        let employ = [];
+
         this.workers.forEach(function (w) {
             all.push(w.id);
 
             if (!w.isBusy()) {
                 idle.push(w.id);
+            }
+
+            if (w.employment) {
+                employ.push(w.id);
             }
         });
 
@@ -262,6 +303,7 @@ class WorkerManager {
             all: all,
             idle: idle,
             jobCount: jobCount,
+            employ: employ,
         }
     }
     //------------------------------------------------------------------
@@ -271,7 +313,7 @@ WorkerManager.instance;
 
 //=============================================================================
 WorkerClass.GModules["WorkerManager"] = WorkerManager;
-Job.GModules["WorkerManager"] = WorkerManager;
+WorkerJob.GModules["WorkerManager"] = WorkerManager;
 
 WorkerManager.GModules = {};
 
