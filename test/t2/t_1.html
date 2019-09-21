@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        .layout {
+            position: fixed;
+            display: inline-block;
+            width: 100px;
+            right: 50%;
+            border: dotted 1px #00F;
+        }
+    </style>
+    <script>
+
+        const pushState = history.pushState;
+
+        history["pushState"] = function(){
+            debugger;
+            
+            pushState.apply(history, arguments);
+        }
+        function a1() {
+            let r = R();
+            history.replaceState(r, null, location.href);
+        }
+
+        function b1() {
+            console.log(history.state);
+            console.dir(history);
+        }
+
+        function c1(){
+            debugger;
+            let url = location.href;
+            
+            url = url.replace(/#.*$|\?.*$/, "");
+            url += "#b"
+            history.pushState(null, null, url);
+        }
+
+        function d1(){
+            location.hash = '#b';
+        }
+
+        function R(){
+            let r = Math.random()*1000;
+            r = Math.floor(r);
+            return r;
+        }
+    </script>
+</head>
+
+<body>
+    <div class="layout">
+        <p>
+            <a href="#a">a</a>
+        </p>
+        <p>
+            <a href="#b">b</a>
+        </p>
+        <p>
+            <a href="#c">c</a>
+        </p>
+        <p>
+            <button onclick="a1()">a1</button>
+            <button onclick="b1()">b1</button>
+            <button onclick="c1()">c1</button>
+            <button onclick="d1()">d1</button>
+        </p>
+    </div>
+    <div>
+        <p id="a">
+            a
+        </p>
+        <pre>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        </pre>
+        <p id="b">
+            b
+        </p>
+        <pre>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        </pre>
+        <p id="c">
+            c
+        </p>
+        <pre>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        </pre>
+    </div>
+</body>
+
+</html>

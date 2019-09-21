@@ -1,3 +1,4 @@
+import { GModules } from './Gmodules_1.js';
 import { workerSettings } from './settings_1.js';
 import { WorkerManager } from './workermanager_1.js';
 import { JobForUser } from './job_1.js';
@@ -16,6 +17,7 @@ import { JobForUser } from './job_1.js';
 //
 ////////////////////////////////////////////////////////////////////////////
 
+
 // 對外命令
 function root() {
     let args = Array.from(arguments);
@@ -24,15 +26,9 @@ function root() {
     return (new JobForUser(manager, args));
 }
 
-root.GModules = {
-    workerSettings: workerSettings,
-    WorkerManager: WorkerManager,
-};
-
-workerSettings.GModules["root"] = root;
-WorkerManager.GModules["root"] = root;
 
 export { root as webWorker };
+GModules["root"] = root;
 //----------------------------
 // 對外的設定
 (function (fn) {
@@ -98,7 +94,7 @@ export { root as webWorker };
 function inject(_) {
     // 注入 _ 的工廠
 
-    root.GModules["_"] = _;
+    GModules["_"] = _;
 
     _.mixin({
         worker: root
@@ -106,3 +102,5 @@ function inject(_) {
 };
 
 export { inject };
+
+

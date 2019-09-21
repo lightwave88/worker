@@ -8,28 +8,47 @@
     <title>Document</title>
     <script>
         const w = new Worker("./js/worker_1.js");
+        
         w.onmessage = function (e) {
-            debugger;
+            // debugger;
+            console.log('worker end');
             console.dir(e);
         }
 
         w.onerror = function (e) {
-            debugger;
+            // debugger;
             console.dir(e);
         }
 
+        let i = 0;
         function a() {
-            w.postMessage({
-                a: "a",
-                b: `console.log("hi");`
-            });
+            // debugger;
+
+            console.log('parent start');
+            w.postMessage(i++);
+
+            for (let i = 0; i < 9999999999; i++) {
+            }
+
+            console.log('parent end');
+            w.onmessage = undefined;
+        }
+
+        function b() {
+            // debugger;
+            w.terminate();
         }
     </script>
 </head>
 
 <body>
     <div>
-        <button onclick="a()">a</button>
+        <p>
+            <button onclick="a()">a</button>
+        </p>
+        <p>
+            <button onclick="b()">b</button>
+        </p>
     </div>
 </body>
 

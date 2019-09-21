@@ -1,13 +1,14 @@
 debugger;
 
 self.onmessage = function (e) {
-    debugger;
+    // debugger;
 
-    let data = e.data;
+    console.log('start(%s)', e.data);
 
-
-    let fn = new Function(data.b);
-    fn();
-
-    console.dir(data);
+    setTimeout(function() {
+        // body
+        console.log('end(%s)', e.data);
+        self.postMessage(e.data)
+    }, 800);
+    
 }

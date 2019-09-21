@@ -1,10 +1,11 @@
-const _ = window._;
+import { GModules } from './Gmodules_1.js';
+//----------------------------
+
 const WorkerClass = {};
 
-WorkerClass.GModules = {};
-
 export { WorkerClass };
-
+GModules["WorkerClass"] = WorkerClass;
+//----------------------------
 let WORKER_UID = 0;
 
 // 抽象類

@@ -1,3 +1,5 @@
+import { GModules } from './Gmodules_1.js';
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // 預設 worker 會彈性隨效能在(max_workers, min_workers)之間調整數量
@@ -49,9 +51,9 @@ const SettingProxy = {
     },
 };
 
-SettingProxy.GModules = {};
 
 export { SettingProxy as workerSettings };
+GModules["workerSettings"] = SettingProxy;
 
 
 (function () {
@@ -98,7 +100,7 @@ export { SettingProxy as workerSettings };
                 errorList.push(`min_workers > max_workers(${defaultSetting.max_workers})`);
             }
 
-            if(count < 0){
+            if (count < 0) {
                 errorList.push('min_workers < 0');
             }
 
@@ -132,8 +134,8 @@ export { SettingProxy as workerSettings };
         configurable: false,
         // writable: false,
         get: function () {
-            const root = SettingProxy.GModules["root"];
-            const _ = root.GModules["_"];
+
+            const _ = GModules["_"];
 
             let info = _.$extension1.info;
 
@@ -153,8 +155,8 @@ export { SettingProxy as workerSettings };
         // writable: false,
         get: function () {
             // debugger;
-            const root = SettingProxy.GModules["root"];
-            const _ = root.GModules["_"];
+
+            const _ = GModules["_"];
 
             let info = _.$extension1.info;
 
@@ -187,14 +189,14 @@ export { SettingProxy as workerSettings };
         // writable: false,
         get: function () {
 
-            if(typeof defaultSetting.timeout != "number"){
+            if (typeof defaultSetting.timeout != "number") {
                 defaultSetting.timeout = null;
             }
 
             return defaultSetting.timeout;
         },
         set: function (timeout) {
-            if(typeof timeout != "number"){
+            if (typeof timeout != "number") {
                 timeout = null;
             }
             defaultSetting.timeout = timeout;

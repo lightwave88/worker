@@ -1,3 +1,4 @@
+import { GModules } from './Gmodules_1.js';
 
 import { WorkerClass } from './workerProxy_2.js';
 import { WorkerJob } from './WorkerJob_1.js';
@@ -48,11 +49,11 @@ class WorkerManager {
     _getSettings() {
         debugger;
 
-        this.root = WorkerManager.GModules["root"];
+        this.root = GModules["root"];
 
-        this.settings = this.root.GModules["workerSettings"];
+        this.settings = GModules["workerSettings"];
 
-        this._ = this.root.GModules["_"];
+        this._ = GModules["_"];
 
         if (this._ == null) {
             throw new Error('no import _');
@@ -312,9 +313,6 @@ class WorkerManager {
 WorkerManager.instance;
 
 //=============================================================================
-WorkerClass.GModules["WorkerManager"] = WorkerManager;
-WorkerJob.GModules["WorkerManager"] = WorkerManager;
-
-WorkerManager.GModules = {};
 
 export { WorkerManager };
+GModules["WorkerManager"] = WorkerManager;

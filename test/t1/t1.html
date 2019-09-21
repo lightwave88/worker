@@ -9,13 +9,21 @@
     <script src="../../js_lib/underscore-1.9.1.js"></script>
     <script src="../../es5 module/index.php"></script>
     <script type="module">
-        console.dir(_);
-        import { webWorker } from '../../es6 module/index.js';
-        // window["$webWorker"] = webWorker;
+        debugger;
+        import { inject } from '../../es6 module/index.js';
+        inject(window._);
     </script>
     <script>
-        async function a(){
-            let res = await _.worker('random', 0, 1000);
+        async function a() {
+            let data = [{ age: 5 }, { age: 2 }];
+
+            let job = _.worker('find', data, (d) => {
+                debugger;
+
+                return (d.age != null && d.age == 2);
+            });
+
+            let res = await job.start();
             console.log(res);
         }
     </script>

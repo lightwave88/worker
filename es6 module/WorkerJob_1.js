@@ -1,3 +1,5 @@
+import { GModules } from './Gmodules_1.js';
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // 任務
@@ -175,6 +177,7 @@ class WorkerJob {
     };
 }
 
-WorkerJob.GModules = {};
+
 
 export { WorkerJob };
+GModules["WorkerJob"] = WorkerJob;
